@@ -5548,6 +5548,7 @@ dependencies = [
  "parity-scale-codec",
  "proofs",
  "rand_core 0.6.3",
+ "scale-info",
  "schnorrkel 0.10.2",
  "serde",
  "sp-core",
@@ -7747,6 +7748,7 @@ name = "proofs"
 version = "2.0.0"
 dependencies = [
  "parity-scale-codec",
+ "scale-info",
  "sp-core",
  "sp-std",
 ]
