@@ -3,7 +3,7 @@
 set -e
 
 cmd=$1
-parachain="${PARA_CHAIN_SPEC:-altair-dev}"
+parachain="${PARA_CHAIN_SPEC:-/altair-dev.json}"
 para_id="${PARA_ID:-2000}"
 
 case $cmd in
@@ -13,52 +13,25 @@ install-toolchain)
 
 start-relay-chain)
   echo "Starting local relay chain with Alice and Bob..."
-  docker-compose -f ./docker-compose-local-relay.yml up -d
+  docker-compose -f ./docker-compose-local-relay.yml up -d node_alice node_bob
   ;;
 
 stop-relay-chain)
   echo "Stopping relay chain..."
-  docker-compose -f ./docker-compose-local-relay.yml down
+  docker-compose -f ./docker-compose-local-relay.yml down node_alice node_bob
   ;;
 
 start-parachain)
-  echo "Building parachain..."
-  cargo build --release
-  if [ "$2" == "purge" ]; then
-    echo "purging parachain..."
-    rm -rf /tmp/centrifuge-chain
-  fi
-
-  ./scripts/run_collator.sh \
-    --chain="${parachain}" --alice \
-    --parachain-id="${para_id}" \
-    --base-path=/tmp/centrifuge-chain/data \
-    --wasm-execution=compiled \
-    --execution=wasm \
-    --port 30355 \
-    --rpc-port 9936 \
-    --ws-port 9946 \
-    --rpc-external \
-    --rpc-cors all \
-    --ws-external \
-    --rpc-methods=Unsafe \
-    --log="main,debug" \
+  echo "Starting para chain..."
+  docker-compose -f ./docker-compose-local-relay.yml up -d para_alice para_bob
   ;;
 
 onboard-parachain)
-  yarn global add @polkadot/api-cli@0.32.1
-  genesis=$(./target/release/centrifuge-chain export-genesis-state --chain="${parachain}" --parachain-id="${para_id}")
-  wasm=$(./target/release/centrifuge-chain export-genesis-wasm --chain="${parachain}")
-  echo "Genesis state:" $genesis
-  echo "WASM:" "./target/release/wbuild/centrifuge-chain-runtime/centrifuge_chain_runtime.compact.wasm"
-
-  polkadot-js-api \
-          --ws ws://0.0.0.0:9944 \
-          --seed "//Alice" \
-          --sudo \
-          tx.parasSudoWrapper.sudoScheduleParaInitialize \
-          2000 \
-          "{ \"genesisHead\":\"${genesis?}\", \"validationCode\": \"${wasm}\", \"parachain\": true }"
+  genesis=$(docker run -v /Users/vedhavyas/Projects/centrifuge-chain/res/altair-dev.json:/altair-dev.json centrifugeio/centrifuge-chain:parachain-20211012001639-424de85 centrifuge-chain export-genesis-state --chain="${parachain}" --parachain-id="${para_id}")
+  wasm=$(docker run -v /Users/vedhavyas/Projects/centrifuge-chain/res/altair-dev.json:/altair-dev.json centrifugeio/centrifuge-chain:parachain-20211012001639-424de85 centrifuge-chain export-genesis-wasm --chain="${parachain}")
+  echo "Genesis state:" "$genesis"
+  echo "${wasm}" > ./centrifuge_chain.wasm
+  echo "WASM:" "./centrifuge_chain.wasm"
   ;;
 
 benchmark)
