@@ -18,6 +18,7 @@ static_assertions = "1.1.0"
 hex-literal = { version = "0.2.1", optional = true }
 rustc-hex = { version = "2.0", optional = true }
 serde = { version = "1.0.102", optional = true }
+scale-info = { version = "1.0", default-features = false, features = ["derive"] }
 
 # parachain
 parachain-info = { git = "https://github.com/paritytech/cumulus", default-features = false, branch = "polkadot-v0.9.11" }
@@ -99,6 +100,8 @@ pallet-anchors = { path = "../../pallets/anchors", default-features = false }
 pallet-fees = { path = "../../pallets/fees", default-features = false }
 pallet-claims = { path = "../../pallets/claims", default-features = false }
 pallet-migration-manager = { path = "../../pallets/migration", default-features = false }
+pallet-crowdloan-claim = { path = "../../pallets/crowdloan-claim", default-features = false }
+pallet-crowdloan-reward = { path = "../../pallets/crowdloan-reward", default-features = false }
 
 [build-dependencies]
 substrate-wasm-builder = "3.0.0"
@@ -106,6 +109,8 @@ substrate-wasm-builder = "3.0.0"
 [features]
 default = ["std"]
 std = [
+    "pallet-crowdloan-claim/std",
+    "pallet-crowdloan-reward/std",
     "sp-authority-discovery/std",
     "pallet-authority-discovery/std",
     "pallet-authorship/std",
@@ -184,6 +189,8 @@ runtime-benchmarks = [
     "pallet-collective/runtime-benchmarks",
     "pallet-society/runtime-benchmarks",
     "pallet-migration-manager/runtime-benchmarks",
+    "pallet-crowdloan-claim/runtime-benchmarks",
+    "pallet-crowdloan-reward/runtime-benchmarks"
 ]
 
 # A feature that should be enabled when the runtime should be build for on-chain
