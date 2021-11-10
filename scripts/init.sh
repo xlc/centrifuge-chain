@@ -3,7 +3,7 @@
 set -e
 
 cmd=$1
-parachain="${PARA_CHAIN_SPEC:-/altair-dev.json}"
+parachain="${PARA_CHAIN_SPEC:-devel-local}"
 para_id="${PARA_ID:-2000}"
 
 case $cmd in
@@ -23,12 +23,17 @@ stop-relay-chain)
 
 start-parachain)
   echo "Starting para chain..."
-  docker-compose -f ./docker-compose-local-relay.yml up -d para_alice para_bob
+  docker-compose -f ./docker-compose-local-relay.yml up -d para_alice
+  ;;
+
+stop-parachain)
+  echo "Stopping para chain..."
+  docker-compose -f ./docker-compose-local-relay.yml down para_alice
   ;;
 
 onboard-parachain)
-  genesis=$(docker run -v /Users/vedhavyas/Projects/centrifuge-chain/res/altair-dev.json:/altair-dev.json centrifugeio/centrifuge-chain:parachain-20211012001639-424de85 centrifuge-chain export-genesis-state --chain="${parachain}" --parachain-id="${para_id}")
-  wasm=$(docker run -v /Users/vedhavyas/Projects/centrifuge-chain/res/altair-dev.json:/altair-dev.json centrifugeio/centrifuge-chain:parachain-20211012001639-424de85 centrifuge-chain export-genesis-wasm --chain="${parachain}")
+  genesis=$(docker run centrifugeio/centrifuge-chain:uniques-latest centrifuge-chain export-genesis-state --chain="${parachain}" --parachain-id="${para_id}")
+  wasm=$(docker run centrifugeio/centrifuge-chain:uniques-latest centrifuge-chain export-genesis-wasm --chain="${parachain}")
   echo "Genesis state:" "$genesis"
   echo "${wasm}" > ./centrifuge_chain.wasm
   echo "WASM:" "./centrifuge_chain.wasm"
