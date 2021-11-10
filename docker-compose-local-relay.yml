@@ -58,8 +58,6 @@ services:
 
   para_alice:
     container_name: para_alice
-    #image: "centrifugeio/centrifuge-chain:parachain-20211012001639-424de85"
-    #image: "centrifugeio/centrifuge-chain:parachain-polkadot-v0.9.11-latest"
     image: "centrifugeio/centrifuge-chain:uniques-latest"
     ports:
       - "30433:30333"
@@ -87,37 +85,3 @@ services:
       --wasm-execution=compiled
       --execution=wasm
       --chain=/chainspec.json
-
-#  para_bob:
-#    container_name: para_bob
-#    image: "centrifugeio/centrifuge-chain:parachain-20211028172939-1696118"
-#    ports:
-#      - "30434:30333"
-#      - "9946:9933"
-#      - "9955:9944"
-#    volumes:
-#      - type: bind
-#        source: ./res/rococo-local.json
-#        target: /chainspec.json
-#        read_only: true
-#      - type: bind
-#        source: ./res/altair-dev.json
-#        target: /altair.json
-#        read_only: true
-#    command: >
-#      centrifuge-chain
-#      --chain=/altair.json
-#      --bob
-#      --parachain-id=2000
-#      --base-path=/data
-#      --wasm-execution=compiled
-#      --execution=wasm
-#      --rpc-external
-#      --rpc-cors all
-#      --ws-external
-#      --rpc-methods=Unsafe
-#      --log=main,info
-#      --
-#      --wasm-execution=compiled
-#      --execution=wasm
-#      --chain=/chainspec.json

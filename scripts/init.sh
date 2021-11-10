@@ -18,7 +18,7 @@ start-relay-chain)
 
 stop-relay-chain)
   echo "Stopping relay chain..."
-  docker-compose -f ./docker-compose-local-relay.yml down node_alice node_bob
+  docker-compose -f ./docker-compose-local-relay.yml rm -fsv node_alice node_bob
   ;;
 
 start-parachain)
@@ -28,7 +28,7 @@ start-parachain)
 
 stop-parachain)
   echo "Stopping para chain..."
-  docker-compose -f ./docker-compose-local-relay.yml down para_alice
+  docker-compose -f ./docker-compose-local-relay.yml rm -fsv para_alice
   ;;
 
 onboard-parachain)
