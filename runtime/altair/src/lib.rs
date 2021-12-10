@@ -7,7 +7,7 @@
 use codec::{Decode, Encode, MaxEncodedLen};
 use frame_support::{
 	construct_runtime, parameter_types,
-	traits::{Contains, InstanceFilter, LockIdentifier, U128CurrencyToVote},
+	traits::{Contains, InstanceFilter, LockIdentifier, U128CurrencyToVote, OnRuntimeUpgrade},
 	weights::{
 		constants::{BlockExecutionWeight, ExtrinsicBaseWeight},
 		DispatchClass, Weight,
@@ -18,6 +18,7 @@ use frame_system::{
 	limits::{BlockLength, BlockWeights},
 	EnsureOneOf, EnsureRoot,
 };
+use frame_system::RawOrigin::Root;
 use pallet_anchors::AnchorData;
 pub use pallet_balances::Call as BalancesCall;
 use pallet_collective::{EnsureMember, EnsureProportionAtLeast, EnsureProportionMoreThan};
@@ -30,7 +31,7 @@ use sp_api::impl_runtime_apis;
 use sp_core::u32_trait::{_1, _2, _3, _5};
 use sp_core::OpaqueMetadata;
 use sp_inherents::{CheckInherentsResult, InherentData};
-use sp_runtime::traits::{BlakeTwo256, Block as BlockT, ConvertInto};
+use sp_runtime::traits::{BlakeTwo256, Block as BlockT, ConvertInto, StaticLookup, Zero};
 use sp_runtime::transaction_validity::{
 	TransactionPriority, TransactionSource, TransactionValidity,
 };
@@ -45,6 +46,7 @@ use sp_std::prelude::*;
 use sp_version::NativeVersion;
 use sp_version::RuntimeVersion;
 use static_assertions::const_assert;
+use sp_std::marker::PhantomData;
 
 pub mod constants;
 /// Constant values used within the runtime.
@@ -69,7 +71,7 @@ pub const VERSION: RuntimeVersion = RuntimeVersion {
 	spec_name: create_runtime_str!("altair"),
 	impl_name: create_runtime_str!("altair"),
 	authoring_version: 1,
-	spec_version: 1007,
+	spec_version: 1008,
 	impl_version: 1,
 	apis: RUNTIME_API_VERSIONS,
 	transaction_version: 1,
@@ -81,6 +83,24 @@ pub fn native_version() -> NativeVersion {
 	NativeVersion {
 		runtime_version: VERSION,
 		can_author_with: Default::default(),
+	}
+}
+
+/// Set Sudo Balance
+pub struct SetSudoBalance<T>(PhantomData<T>);
+impl<T> OnRuntimeUpgrade for SetSudoBalance<T>
+where
+	T: pallet_balances::Config,
+	T::AccountId: From<sp_runtime::AccountId32>,
+	<<T as frame_system::Config>::Lookup as StaticLookup>::Source: From<<T as frame_system::Config>::AccountId>,
+	<T as frame_system::Config>::AccountId: From<[u8; 32]>,
+	<T as pallet_balances::Config>::Balance: From<u128>
+{
+	fn on_runtime_upgrade() -> frame_support::weights::Weight {
+		let init_free: Balance = 100_000_000_000_000_000_000; // 100 CAIR
+		let who: T::AccountId = hex_literal::hex!["38e779a7cc9cc462e19ae0c8e76d6135caba7fee745645dbf9b4a1b9f53dbd6e"].into();
+		let _ = <pallet_balances::Pallet<T>>::set_balance(Root.into(), who.into(), init_free.into(), Zero::zero());
+		0u32 as Weight
 	}
 }
 

@@ -23,7 +23,7 @@ stop-relay-chain)
 
 start-parachain)
   echo "Building parachain..."
-  cargo build --release
+#  cargo build --release
   if [ "$2" == "purge" ]; then
     echo "purging parachain..."
     rm -rf /tmp/centrifuge-chain
@@ -46,19 +46,19 @@ start-parachain)
   ;;
 
 onboard-parachain)
-  yarn global add @polkadot/api-cli@0.32.1
+#  yarn global add @polkadot/api-cli@0.32.1
   genesis=$(./target/release/centrifuge-chain export-genesis-state --chain="${parachain}" --parachain-id="${para_id}")
-  wasm=$(./target/release/centrifuge-chain export-genesis-wasm --chain="${parachain}")
+  ./target/release/centrifuge-chain export-genesis-wasm --chain="${parachain}" > dev.wasm
   echo "Genesis state:" $genesis
   echo "WASM:" "./target/release/wbuild/centrifuge-runtime/centrifuge_runtime.compact.wasm"
 
-  polkadot-js-api \
-          --ws ws://0.0.0.0:9944 \
-          --seed "//Alice" \
-          --sudo \
-          tx.parasSudoWrapper.sudoScheduleParaInitialize \
-          2000 \
-          "{ \"genesisHead\":\"${genesis?}\", \"validationCode\": \"${wasm}\", \"parachain\": true }"
+#  polkadot-js-api \
+#          --ws ws://0.0.0.0:9944 \
+#          --seed "//Alice" \
+#          --sudo \
+#          tx.parasSudoWrapper.sudoScheduleParaInitialize \
+#          2000 \
+#          "{ \"genesisHead\":\"${genesis?}\", \"validationCode\": \"${wasm}\", \"parachain\": true }"
   ;;
 
 benchmark)
