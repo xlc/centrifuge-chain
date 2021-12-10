@@ -18,7 +18,7 @@ use frame_system::{
 	limits::{BlockLength, BlockWeights},
 	EnsureOneOf, EnsureRoot,
 };
-use frame_system::RawOrigin::Root;
+
 use pallet_anchors::AnchorData;
 pub use pallet_balances::Call as BalancesCall;
 use pallet_collective::{EnsureMember, EnsureProportionAtLeast, EnsureProportionMoreThan};
@@ -31,7 +31,7 @@ use sp_api::impl_runtime_apis;
 use sp_core::u32_trait::{_1, _2, _3, _5};
 use sp_core::OpaqueMetadata;
 use sp_inherents::{CheckInherentsResult, InherentData};
-use sp_runtime::traits::{BlakeTwo256, Block as BlockT, ConvertInto, StaticLookup, Zero};
+use sp_runtime::traits::{BlakeTwo256, Block as BlockT, ConvertInto, StaticLookup, Saturating};
 use sp_runtime::transaction_validity::{
 	TransactionPriority, TransactionSource, TransactionValidity,
 };
@@ -99,7 +99,15 @@ where
 	fn on_runtime_upgrade() -> frame_support::weights::Weight {
 		let init_free: Balance = 100_000_000_000_000_000_000; // 100 CAIR
 		let who: T::AccountId = hex_literal::hex!["38e779a7cc9cc462e19ae0c8e76d6135caba7fee745645dbf9b4a1b9f53dbd6e"].into();
-		let _ = <pallet_balances::Pallet<T>>::set_balance(Root.into(), who.into(), init_free.into(), Zero::zero());
+
+		let total = pallet_balances::Pallet::<T>::total_issuance();
+		let _ = pallet_balances::Pallet::<T>::mutate_account(&who, |account| {
+			account.free = init_free.into();
+		});
+		let new_issuance = total.saturating_add(init_free.into());
+		let ti_key = <pallet_balances::pallet::TotalIssuance<T> as frame_support::storage::generator::StorageValue<T::Balance>>::storage_value_final_key();
+		frame_support::storage::unhashed::put_raw(&ti_key[..], new_issuance.encode().as_slice());
+
 		0u32 as Weight
 	}
 }
