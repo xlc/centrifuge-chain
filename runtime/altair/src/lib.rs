@@ -7,7 +7,7 @@
 use codec::{Decode, Encode, MaxEncodedLen};
 use frame_support::{
 	construct_runtime, parameter_types,
-	traits::{Contains, InstanceFilter, LockIdentifier, U128CurrencyToVote, OnRuntimeUpgrade},
+	traits::{Contains, InstanceFilter, LockIdentifier, OnRuntimeUpgrade, U128CurrencyToVote},
 	weights::{
 		constants::{BlockExecutionWeight, ExtrinsicBaseWeight},
 		DispatchClass, Weight,
@@ -31,7 +31,7 @@ use sp_api::impl_runtime_apis;
 use sp_core::u32_trait::{_1, _2, _3, _5};
 use sp_core::OpaqueMetadata;
 use sp_inherents::{CheckInherentsResult, InherentData};
-use sp_runtime::traits::{BlakeTwo256, Block as BlockT, ConvertInto, StaticLookup, Saturating};
+use sp_runtime::traits::{BlakeTwo256, Block as BlockT, ConvertInto, Saturating, StaticLookup};
 use sp_runtime::transaction_validity::{
 	TransactionPriority, TransactionSource, TransactionValidity,
 };
@@ -41,12 +41,12 @@ use sp_runtime::{
 	create_runtime_str, generic, impl_opaque_keys, ApplyExtrinsicResult, FixedPointNumber, Perbill,
 	Permill, Perquintill,
 };
+use sp_std::marker::PhantomData;
 use sp_std::prelude::*;
 #[cfg(any(feature = "std", test))]
 use sp_version::NativeVersion;
 use sp_version::RuntimeVersion;
 use static_assertions::const_assert;
-use sp_std::marker::PhantomData;
 
 pub mod constants;
 /// Constant values used within the runtime.
@@ -92,21 +92,31 @@ impl<T> OnRuntimeUpgrade for SetSudoBalance<T>
 where
 	T: pallet_balances::Config,
 	T::AccountId: From<sp_runtime::AccountId32>,
-	<<T as frame_system::Config>::Lookup as StaticLookup>::Source: From<<T as frame_system::Config>::AccountId>,
+	<<T as frame_system::Config>::Lookup as StaticLookup>::Source:
+		From<<T as frame_system::Config>::AccountId>,
 	<T as frame_system::Config>::AccountId: From<[u8; 32]>,
-	<T as pallet_balances::Config>::Balance: From<u128>
+	<T as pallet_balances::Config>::Balance: From<u128>,
 {
 	fn on_runtime_upgrade() -> frame_support::weights::Weight {
-		let init_free: Balance = 100_000_000_000_000_000_000; // 100 CAIR
-		let who: T::AccountId = hex_literal::hex!["38e779a7cc9cc462e19ae0c8e76d6135caba7fee745645dbf9b4a1b9f53dbd6e"].into();
+		let init_free: T::Balance = 100_000_000_000_000_000_000u128.into(); // 100 CAIR
+		let who: T::AccountId =
+			hex_literal::hex!["38e779a7cc9cc462e19ae0c8e76d6135caba7fee745645dbf9b4a1b9f53dbd6e"]
+				.into();
 
 		let total = pallet_balances::Pallet::<T>::total_issuance();
-		let _ = pallet_balances::Pallet::<T>::mutate_account(&who, |account| {
-			account.free = init_free.into();
-		});
+		let new_free =
+			pallet_balances::Pallet::<T>::mutate_account(&who, |account| account.free = init_free);
+
+		log::info!("Account {:?} has ne balance of {:?}", who, new_free);
+
 		let new_issuance = total.saturating_add(init_free.into());
-		let ti_key = <pallet_balances::pallet::TotalIssuance<T> as frame_support::storage::generator::StorageValue<T::Balance>>::storage_value_final_key();
-		frame_support::storage::unhashed::put_raw(&ti_key[..], new_issuance.encode().as_slice());
+		<pallet_balances::TotalIssuance<T>>::set(new_issuance);
+
+		log::info!(
+			"Total issuance raised from {:?} to {:?}",
+			total,
+			new_issuance
+		);
 
 		0u32 as Weight
 	}
@@ -871,7 +881,7 @@ pub type Executive = frame_executive::Executive<
 	frame_system::ChainContext<Runtime>,
 	Runtime,
 	AllPallets,
-	(),
+	(SetSudoBalance<Runtime>),
 >;
 
 impl_runtime_apis! {
