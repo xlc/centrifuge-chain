@@ -39,8 +39,11 @@ orml-xtokens = { git = "https://github.com/open-web3-stack/open-runtime-module-l
 
 # Misc
 xcm-emulator = { git = "https://github.com/shaunxw/xcm-simulator", branch="master" }
+# TODO(nuno): get this dependency to compile
+karura-runtime = { git = "https://github.com/AcalaNetwork/Acala", branch = "master" }
 
 # Local
 runtime-common = { path = "../common" }
 development-runtime = { path = "../development" }
 common-traits = { path = "../../libs/common-traits" }
+
